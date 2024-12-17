@@ -2,7 +2,7 @@ import requests
 import json
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-
+import os 
 load_dotenv()
 
 DATABASES_ENDPOINT = "https://api.notion.com/v1/databases"
@@ -260,7 +260,7 @@ if __name__ == "__main__":
     # xml_url = "https://shop.joygarden.vn/sitemap_products_1.xml"
     # data = fetch_data_from_sitemap(xml_url)
     
-    client = NotionClient(notion_token="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")
+    client = NotionClient(notion_token=os.getenv("NOTION_TOKEN"))
     pages = client.get_rows("15c6739fbff180d58d8dd3c3978aaf68")
     rs = get_meta_data(pages)
     print(rs)
