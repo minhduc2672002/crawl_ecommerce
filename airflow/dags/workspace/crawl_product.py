@@ -3,12 +3,12 @@ import json
 from dotenv import load_dotenv
 import os
 import sys
-from notion_client  import NotionClient
+from notion.notion_client  import NotionClient
 from crawler import WebCrawler
 import concurrent.futures
 import queue
 # Thêm thư mục cha vào sys.path
-sys.path.append(os.path.abspath("../"))
+# sys.path.append(os.path.abspath("../"))
 load_dotenv()
 
 
@@ -130,7 +130,7 @@ if __name__ == "__main__":
 
     meta_data = dict()
     task_queue = queue.Queue()
-    PAGE_ID = "15f6739fbff1800f9dacd502f1638f00"
+    PAGE_ID = "15f6739fbff1800f9adcd502f1638f00"
 
     sitemap_products = fetch_data_from_sitemap("https://shop.joygarden.vn/sitemap_products_1.xml")
 
