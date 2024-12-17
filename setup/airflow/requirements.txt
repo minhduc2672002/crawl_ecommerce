@@ -1,0 +1,5 @@
+beautifulsoup4
+
+
+
+curl -X 'GET'   'http://localhost:8085/api/v1/variables?limit=100'   -H 'accept: application/json' --user "airflow:airflow"
