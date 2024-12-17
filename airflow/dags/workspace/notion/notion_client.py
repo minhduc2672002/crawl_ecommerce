@@ -1,17 +1,38 @@
 import requests
+import time
 import json
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 import os 
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 load_dotenv()
 
 DATABASES_ENDPOINT = "https://api.notion.com/v1/databases"
 PAGES_ENDPOINT = "https://api.notion.com/v1/pages"
 BLOCKS_ENDPOINT = "https://api.notion.com/v1/blocks"
 
+
+
+session = requests.Session()
+
+# Cấu hình Retry
+retry_strategy = Retry(
+    total=3,  # Tổng số lần thử lại
+    backoff_factor=3,  # Thời gian chờ giữa các lần thử lại (exponential backoff)
+    status_forcelist=[500, 502, 503, 504,404,409,400],  # Các mã trạng thái HTTP sẽ thử lại
+    allowed_methods=["HEAD", "GET", "POST"]  # Các phương thức HTTP được áp dụng retry
+)
+
+# Áp dụng HTTPAdapter với retry strategy cho session
+adapter = HTTPAdapter(max_retries=retry_strategy)
+session.mount("http://", adapter)
+session.mount("https://", adapter)
+
 class NotionClient:
-    def __init__(self,notion_token : str) -> None:
+    def __init__(self,notion_token : str, root_id: str) -> None:
         self.notion_token = notion_token
+        self.root_id = root_id
 
 
     @property
@@ -40,7 +61,7 @@ class NotionClient:
             while data["has_more"] and get_all:
                 payload = {"page_size": page_size, "start_cursor": data["next_cursor"]}
                 url = f"https://api.notion.com/v1/databases/{database_id}/query"
-                response = requests.post(url, json=payload, headers=self.headers)
+                response = session.post(url, json=payload, headers=self.headers)
                 data = response.json()
                 results.extend(data["results"])
 
@@ -68,8 +89,9 @@ class NotionClient:
     
     def create_new_page(self, parrent_page_id : str,subpage_name: str ):
         """
-            Create new page in Notion
+            create new page in Notion
         """
+        # time.sleep(4)
         data = {
             "parent": {
                 "type": "page_id",
@@ -88,7 +110,7 @@ class NotionClient:
         }
 
         # Gửi yêu cầu POST để tạo page mới
-        response = requests.post(PAGES_ENDPOINT, headers=self.headers, data=json.dumps(data))
+        response = session.post(PAGES_ENDPOINT, headers=self.headers, data=json.dumps(data))
         return response
     
     def add_text_block(self,page_id : str, content : str):
@@ -169,7 +191,7 @@ class NotionClient:
     
     def get_code_blocks(self, page_id: str):
         notion_api_url = f"{BLOCKS_ENDPOINT}/{page_id}/children"
-        response = requests.get(notion_api_url, headers=self.headers)
+        response = session.get(notion_api_url, headers=self.headers)
         
         if response.status_code == 200:
             blocks = response.json().get("results", [])
@@ -196,7 +218,7 @@ class NotionClient:
 
     def clear_code_blocks(self,page_id :str):
         url = f"{BLOCKS_ENDPOINT}/{page_id}/children"
-        response = requests.get(url, headers=self.headers)
+        response = session.get(url, headers=self.headers)
         if response.status_code == 200:
             blocks = response.json()["results"]  # List of blocks on the page
             
@@ -223,7 +245,7 @@ class NotionClient:
 def fetch_data_from_sitemap(xml_url):
     try:
         # Gửi yêu cầu HTTP để tải sitemap XML
-        response = requests.get(xml_url)
+        response = session.get(xml_url)
         response.raise_for_status()  # Kiểm tra lỗi HTTP
         xml_content = response.text  # Nội dung XML
 

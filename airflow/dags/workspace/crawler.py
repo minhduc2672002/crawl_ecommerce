@@ -11,6 +11,11 @@ import unicodedata
 import string
 from datetime import datetime
 import argparse
+
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+
 class WebCrawler:
     def __init__(self, base_url : str | None = None, output_dir="."):
         self.base_url = base_url
